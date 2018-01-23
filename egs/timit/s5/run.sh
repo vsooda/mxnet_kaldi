@@ -13,6 +13,14 @@ set -u           #Fail on an undefined variable
 . ./cmd.sh
 . ./path.sh
 
+prefix=timit
+
+if [[ ! -d utils ]]; then
+    ln -s ${KALDI_ROOT}/egs/${prefix}/s5/utils utils
+    ln -s ${KALDI_ROOT}/egs/${prefix}/s5/local local
+    ln -s ${KALDI_ROOT}/egs/${prefix}/s5/conf conf
+fi
+
 cmd=run.pl
 # root folder,
 expdir=exp_timit
@@ -46,7 +54,6 @@ deviceNumber=gpu0
 method=simple
 modelName=
 # model
-prefix=timit
 num_epoch=12
 acwt=0.1
 #smbr training variables
