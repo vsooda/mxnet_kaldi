@@ -13,9 +13,18 @@ set -u           #Fail on an undefined variable
 . ./cmd.sh
 . ./path.sh
 
+prefix=thchs30
+
+if [[ ! -d utils ]]; then
+    ln -s ${KALDI_ROOT}/egs/${prefix}/s5/utils utils
+    ln -s ${KALDI_ROOT}/egs/${prefix}/s5/local local
+    ln -s ${KALDI_ROOT}/egs/${prefix}/s5/conf conf
+fi
+
 cmd=run.pl
 # root folder,
-expdir=exp_thchs30
+expdir=exp
+scripts_path=../../../
 
 ##################################################
 # Kaldi generated folder
@@ -32,10 +41,10 @@ train_src=/home/sooda/speech/kaldi/egs/thchs30/s5/data/mfcc/train
 dev_src=/home/sooda/speech/kaldi/egs/thchs30/s5/data/mfcc/test_phone
 
 # config file
-config=default_thchs30.cfg
+config=default.cfg
 # optional settings,
 njdec=1
-scoring="--min-lmwt 5 --max-lmwt 19"
+scoring="--min-lmwt 5 --max-lmwt 5"
 
 # The device number to run the training
 # change to AUTO to select the card automatically
@@ -45,15 +54,14 @@ deviceNumber=gpu0
 method=simple
 modelName=
 # model
-prefix=thchs30
-num_epoch=12
+num_epoch=30
 acwt=0.1
 #smbr training variables
 num_utts_per_iter=40
 smooth_factor=0.1
 use_one_sil=true
 
-stage=4
+stage=3
 . utils/parse_options.sh || exit 1;
 
 
@@ -105,21 +113,20 @@ fi
 # generate label counts
 if [ $stage -le 2 ] ; then
     $cmd JOB=1:1 $dir/log/gen_label_mean.JOB.log \
-        python make_stats.py --configfile $config --data_train $dir/train.feats \| copy-feats ark:- ark:$dir/label_mean.ark
+        python ${scripts_path}/make_stats.py --configfile $config --data_train $dir/train.feats \| copy-feats ark:- ark:$dir/label_mean.ark
     echo NO_FEATURE_TRANSFORM ark:$dir/label_mean.ark > $dir/label_mean.feats
 fi
 
-
 # training, note that weight decay is for the whole batch (0.00001 * 20 (minibatch) * 40 (batch_size))
 if [ $stage -le 3 ] ; then
-    python train_lstm_proj.py --configfile $config --data_train $dir/train.feats --data_dev $dir/dev.feats --train_prefix $PWD/$expdir/$prefix --train_optimizer speechSGD --train_learning_rate 0.01 --train_context $deviceNumber --train_weight_decay 0.008 --train_show_every 1000
+    python ${scripts_path}/train_lstm_proj.py --configfile $config --data_train $dir/train.feats --data_dev $dir/dev.feats --train_prefix $PWD/$expdir/$prefix --train_num_epoch $num_epoch --train_optimizer speechSGD --train_learning_rate 0.01 --train_context $deviceNumber --train_weight_decay 0.008 --train_show_every 1000
 fi
 
 # decoding
 if [ $stage -le 4 ] ; then
   cp $ali_src/final.mdl $expdir
-  mxnet_string="OMP_NUM_THREADS=1 python decode_mxnet.py --config $config --data_test $dir/test.feats --data_label_mean $dir/label_mean.feats --train_method $method --train_prefix $PWD/$expdir/$prefix --train_num_epoch $num_epoch --train_context gpu0 --train_batch_size 1"
-  ./decode_mxnet.sh --nj $njdec --cmd $cmd --acwt $acwt --scoring-opts "$scoring" \
+  mxnet_string="OMP_NUM_THREADS=1 python ${scripts_path}/decode_mxnet.py --config $config --data_test $dir/test.feats --data_label_mean $dir/label_mean.feats --train_method $method --train_prefix $PWD/$expdir/$prefix --train_num_epoch $num_epoch --train_context gpu0 --train_batch_size 1"
+  ${scripts_path}/decode_mxnet.sh --nj $njdec --cmd $cmd --acwt $acwt --scoring-opts "$scoring" \
     $graph_src $dev_src $expdir/decode_${prefix}_$(basename $dev_src) "$mxnet_string" || exit 1;
 
 fi

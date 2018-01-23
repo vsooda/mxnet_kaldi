@@ -54,14 +54,14 @@ deviceNumber=gpu0
 method=simple
 modelName=
 # model
-num_epoch=8
+num_epoch=50
 acwt=0.1
 #smbr training variables
 num_utts_per_iter=40
 smooth_factor=0.1
 use_one_sil=true
 
-stage=4
+stage=3
 . utils/parse_options.sh || exit 1;
 
 
