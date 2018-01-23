@@ -1,8 +1,8 @@
 ### note
 
-This is the speech demo from mxnet, but for some [reason](https://github.com/apache/incubator-mxnet/pull/9060), they remove this demo.
+This is the speech demo from mxnet, but for some [reason](https://github.com/apache/incubator-mxnet/pull/9060), they removed this demo. I had contributed timit recipe for this demo, and make it work quite well. Their behavior made me feel a little uncomfortable.
 
-I will update this demo for the latest kaldi and mxnet. I will update usage in README some day.
+I will update this demo for the latest kaldi and mxnet. I will update usage in README someday.
 
 thanks for the original author @pluskid and @yzhang87.
 
