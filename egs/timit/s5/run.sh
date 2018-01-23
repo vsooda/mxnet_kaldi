@@ -16,6 +16,7 @@ set -u           #Fail on an undefined variable
 cmd=run.pl
 # root folder,
 expdir=exp_timit
+scripts_path=../../../
 
 ##################################################
 # Kaldi generated folder
@@ -32,10 +33,10 @@ train_src=/home/sooda/speech/kaldi/egs/timit/s5/data/train
 dev_src=/home/sooda/speech/kaldi/egs/timit/s5/data/dev
 
 # config file
-config=default_timit.cfg
+config=default.cfg
 # optional settings,
-njdec=8
-scoring="--min-lmwt 5 --max-lmwt 19"
+njdec=4
+scoring="--min-lmwt 5 --max-lmwt 6"
 
 # The device number to run the training
 # change to AUTO to select the card automatically
@@ -103,21 +104,21 @@ fi
 # generate label counts
 if [ $stage -le 2 ] ; then
     $cmd JOB=1:1 $dir/log/gen_label_mean.JOB.log \
-        python make_stats.py --configfile $config --data_train $dir/train.feats \| copy-feats ark:- ark:$dir/label_mean.ark
+        python $scripts_path/make_stats.py --configfile $config --data_train $dir/train.feats \| copy-feats ark:- ark:$dir/label_mean.ark
     echo NO_FEATURE_TRANSFORM ark:$dir/label_mean.ark > $dir/label_mean.feats
 fi
 
 
 # training, note that weight decay is for the whole batch (0.00001 * 20 (minibatch) * 40 (batch_size))
 if [ $stage -le 3 ] ; then
-    python train_lstm_proj.py --configfile $config --data_train $dir/train.feats --data_dev $dir/dev.feats --train_prefix $PWD/$expdir/$prefix --train_optimizer speechSGD --train_learning_rate 1 --train_context $deviceNumber --train_weight_decay 0.008 --train_show_every 1000
+    python $scripts_path/train_lstm_proj.py --configfile $config --data_train $dir/train.feats --data_dev $dir/dev.feats --train_prefix $PWD/$expdir/$prefix --train_optimizer speechSGD --train_learning_rate 1 --train_context $deviceNumber --train_weight_decay 0.008 --train_show_every 1000
 fi
 
 # decoding
 if [ $stage -le 4 ] ; then
   cp $ali_src/final.mdl $expdir
-  mxnet_string="OMP_NUM_THREADS=1 python decode_mxnet.py --config $config --data_test $dir/test.feats --data_label_mean $dir/label_mean.feats --train_method $method --train_prefix $PWD/$expdir/$prefix --train_num_epoch $num_epoch --train_context cpu0 --train_batch_size 1"
-  ./decode_mxnet.sh --nj $njdec --cmd $cmd --acwt $acwt --scoring-opts "$scoring" \
+  mxnet_string="OMP_NUM_THREADS=1 python $scripts_path/decode_mxnet.py --config $config --data_test $dir/test.feats --data_label_mean $dir/label_mean.feats --train_method $method --train_prefix $PWD/$expdir/$prefix --train_num_epoch $num_epoch --train_context $deviceNumber --train_batch_size 1"
+  $scripts_path/decode_mxnet.sh --nj $njdec --cmd $cmd --acwt $acwt --scoring-opts "$scoring" \
     $graph_src $dev_src $expdir/decode_${prefix}_$(basename $dev_src) "$mxnet_string" || exit 1;
 
 fi
