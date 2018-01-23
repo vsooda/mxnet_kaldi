@@ -1,5 +1,14 @@
+### note
+
+This is the speech demo from mxnet, but for some [reason](https://github.com/apache/incubator-mxnet/pull/9060), they remove this demo.
+
+I will update this demo for the latest kaldi and mxnet. I will update usage in README some day.
+
+thanks for the original author @pluskid and @yzhang87.
+
 Speech Acoustic Modeling Example
 ================================
+
 This folder contains examples for speech recognition.
 
 - [lstm_proj.py](lstm.py): Functions for building a LSTM Network with/without projection layer.
@@ -146,7 +155,7 @@ Here are the results on TIMIT and AMI test set (using all default setup, 3 layer
 
 Note that for AMI 42.2 was evaluated non-overlapped speech. Kaldi-HMM baseline was 67.2% and DNN was 57.5%.
 
-### update Feb 07
+### update Feb 07, 2017
 
 We had updated this demo on Feb 07 (kaldi c747ed5, mxnet 912a7eb). We had also added timit demo script in this folder. 
 
