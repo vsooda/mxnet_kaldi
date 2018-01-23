@@ -237,11 +237,8 @@ def do_training(training_method, args, module, data_train, data_val):
             lr_scheduler.dynamic_lr /= decay_factor
             # we reset the optimizer because the internal states (e.g. momentum)
             # might already be exploded, so we want to start from fresh
-            n_epoch += 1
-            mx.model.save_checkpoint(get_checkpoint_path(args), n_epoch,
-                                     module.symbol, *last_params)
             reset_optimizer()
-            #module.set_params(*last_params)
+            module.set_params(*last_params)
         else:
             last_params = module.get_params()
             last_acc = curr_acc
