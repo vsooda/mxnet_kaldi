@@ -128,18 +128,28 @@ bucket of len 500 : 41 samples
 bucket of len 600 : 6 samples
 bucket of len 700 : 3 samples
 bucket of len 800 : 0 samples
-2016-04-21 20:02:40,904 Epoch[0] Train-Acc_exlude_padding=0.154763
-2016-04-21 20:02:40,904 Epoch[0] Time cost=91.574
-2016-04-21 20:02:44,419 Epoch[0] Validation-Acc_exlude_padding=0.353552
-2016-04-21 20:04:17,290 Epoch[1] Train-Acc_exlude_padding=0.447318
-2016-04-21 20:04:17,290 Epoch[1] Time cost=92.870
-2016-04-21 20:04:20,738 Epoch[1] Validation-Acc_exlude_padding=0.506458
-2016-04-21 20:05:53,127 Epoch[2] Train-Acc_exlude_padding=0.557543
-2016-04-21 20:05:53,128 Epoch[2] Time cost=92.390
-2016-04-21 20:05:56,568 Epoch[2] Validation-Acc_exlude_padding=0.548100
+2018-01-23 18:28:49,277 Epoch[27] Batch [1000]  Speed: 564.20 samples/sec       CrossEntropy=0.499940   Acc_exclude_padding=0.849617
+2018-01-23 18:29:11,458 Epoch[27] Train-CrossEntropy=0.501513
+2018-01-23 18:29:11,458 Epoch[27] Train-Acc_exclude_padding=0.847661
+2018-01-23 18:29:11,458 Epoch[27] Time cost=93.117
+2018-01-23 18:29:17,563 Epoch[27] Dev-CrossEntropy=1.916433
+2018-01-23 18:29:17,563 Epoch[27] Dev-Acc_exclude_padding=0.526585
+2018-01-23 18:29:17,563 Epoch[27] !!! Dev set performance drops, reverting this epoch
+2018-01-23 18:29:17,563 Epoch[27] !!! LR decay: 1.52588e-05 => 7.62939e-06
+2018-01-23 18:29:17,620 Saved checkpoint to "/home/sooda/speech/mxnet_kaldi/egs/timit/s5/exp/timit-0028.params"
+2018-01-23 18:30:28,113 Epoch[28] Batch [1000]  Speed: 567.75 samples/sec       CrossEntropy=0.498858   Acc_exclude_padding=0.849147
+2018-01-23 18:30:50,328 Epoch[28] Train-CrossEntropy=0.506030
+2018-01-23 18:30:50,328 Epoch[28] Train-Acc_exclude_padding=0.848894
+2018-01-23 18:30:50,328 Epoch[28] Time cost=92.709
+2018-01-23 18:30:56,426 Epoch[28] Dev-CrossEntropy=1.916436
+2018-01-23 18:30:56,426 Epoch[28] Dev-Acc_exclude_padding=0.526577
+2018-01-23 18:30:56,427 Epoch[28] !!! Dev set performance drops, reverting this epoch
+2018-01-23 18:30:56,427 Epoch[28] !!! LR decay: 7.62939e-06 => 3.8147e-06
 ```
 
-The final frame accuracy was around 62%.
+~~The final frame accuracy was around 62%~~
+
+currently frame accuracy 52.6%, decode with fst, wer is 19%.
 
 ### Run decode on the trained acoustic model
 
