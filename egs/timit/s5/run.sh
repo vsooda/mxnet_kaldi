@@ -10,10 +10,30 @@ set -o pipefail  #Exit if any of the commands in the pipeline will
                  #return non-zero return code
 set -u           #Fail on an undefined variable
 
-. ./cmd.sh
-. ./path.sh
+global_config_file=scripts/global.cfg
+if [ ! -f  $global_config_file ]; then
+    echo "Global config file doesn't exist"
+    exit 1
+else
+    source $global_config_file
+fi
 
-prefix=timit
+kaldi_dataset_root=$kaldi_root/egs/$dataset/s5
+
+cmd=run.pl
+# root folder,
+expdir=exp
+scripts_path=../../../
+
+export KALDI_ROOT=$kaldi_root
+
+[ -f $KALDI_ROOT/tools/env.sh ] && . $KALDI_ROOT/tools/env.sh
+export PATH=$PWD/utils/:$KALDI_ROOT/tools/openfst/bin:$KALDI_ROOT/tools/irstlm/bin/:$PWD:$PATH
+[ ! -f $KALDI_ROOT/tools/config/common_path.sh ] && echo >&2 "The standard file $KALDI_ROOT/tools/config/common_path.sh is not present -> Exit!" && exit 1
+. $KALDI_ROOT/tools/config/common_path.sh
+export LC_ALL=C
+
+prefix=$dataset
 
 if [[ ! -d utils ]]; then
     ln -s ${KALDI_ROOT}/egs/${prefix}/s5/utils utils
@@ -21,47 +41,51 @@ if [[ ! -d utils ]]; then
     ln -s ${KALDI_ROOT}/egs/${prefix}/s5/conf conf
 fi
 
-cmd=run.pl
-# root folder,
-expdir=exp
-scripts_path=../../../
 
 ##################################################
 # Kaldi generated folder
 ##################################################
 
 # alignment folder
-ali_src=/home/sooda/speech/kaldi/egs/timit/s5/exp/tri3_ali
+ali_src=$kaldi_dataset_root/$ali_dir
 
 # decoding graph
-graph_src=/home/sooda/speech/kaldi/egs/timit/s5/exp/tri3/graph
+graph_src=$kaldi_dataset_root/$graph_dir
 
 # features
-train_src=/home/sooda/speech/kaldi/egs/timit/s5/data/train
-dev_src=/home/sooda/speech/kaldi/egs/timit/s5/data/dev
+train_src=$kaldi_dataset_root/$train_dir
+dev_src=$kaldi_dataset_root/$dev_dir
 
 # config file
 config=default.cfg
 # optional settings,
-njdec=4
+njdec=$nj
 scoring="--min-lmwt 5 --max-lmwt 6"
+
+cp scripts/template.cfg $config
+sed -i "s:EPOCH_NUM:${num_epoch}:g" $config
+sed -i "s:DATASET:${dataset}:g" $config
+sed -i "s:DATA_PREFIX:${kaldi_dataset_root}:g" $config
+sed -i "s:OUTPUT_DIM:${ydim}:g" $config
 
 # The device number to run the training
 # change to AUTO to select the card automatically
 deviceNumber=gpu0
+ydim=$((`cat ${graph_src}/num_pdfs`+1))
+echo "ydim: " $ydim
 
 # decoding method
 method=simple
 modelName=
 # model
-num_epoch=50
+num_epoch=$num_epoch
 acwt=0.1
 #smbr training variables
 num_utts_per_iter=40
 smooth_factor=0.1
 use_one_sil=true
 
-stage=3
+stage=$stage
 . utils/parse_options.sh || exit 1;
 
 
