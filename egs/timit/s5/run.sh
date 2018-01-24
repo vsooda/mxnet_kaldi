@@ -22,7 +22,7 @@ kaldi_dataset_root=$kaldi_root/egs/$dataset/s5
 
 cmd=run.pl
 # root folder,
-expdir=exp
+expdir=`pwd`/exp
 scripts_path=../../../
 
 export KALDI_ROOT=$kaldi_root
@@ -56,23 +56,19 @@ graph_src=$kaldi_dataset_root/$graph_dir
 train_src=$kaldi_dataset_root/$train_dir
 dev_src=$kaldi_dataset_root/$dev_dir
 
+ydim=$((`cat ${graph_src}/num_pdfs`+1))
+echo "ydim: " $ydim
+
 # config file
 config=default.cfg
 # optional settings,
 njdec=$nj
 scoring="--min-lmwt 5 --max-lmwt 6"
 
-cp scripts/template.cfg $config
-sed -i "s:EPOCH_NUM:${num_epoch}:g" $config
-sed -i "s:DATASET:${dataset}:g" $config
-sed -i "s:DATA_PREFIX:${kaldi_dataset_root}:g" $config
-sed -i "s:OUTPUT_DIM:${ydim}:g" $config
 
 # The device number to run the training
 # change to AUTO to select the card automatically
 deviceNumber=gpu0
-ydim=$((`cat ${graph_src}/num_pdfs`+1))
-echo "ydim: " $ydim
 
 # decoding method
 method=simple
@@ -95,6 +91,12 @@ stage=$stage
 
 mkdir -p $expdir
 dir=$expdir/data-for-mxnet
+
+cp scripts/template.cfg $config
+sed -i "s:EPOCH_NUM:${num_epoch}:g" $config
+sed -i "s:DATASET:${dataset}:g" $config
+sed -i "s:DATA_PREFIX:${dir}:g" $config
+sed -i "s:OUTPUT_DIM:${ydim}:g" $config
 
 # prepare listing data
 if [ $stage -le 0 ] ; then
