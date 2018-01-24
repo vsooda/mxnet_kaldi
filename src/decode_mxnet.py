@@ -128,8 +128,10 @@ if __name__ == '__main__':
     module.bind(data_shapes=data_test.provide_data, label_shapes=None, for_training=False)
     module.set_params(arg_params=arg_params, aux_params=aux_params)
 
-    kaldiWriter = KaldiWriteOut(None, out_file)
-    kaldiWriter.open_or_fd()
+    #kaldiWriter = KaldiWriteOut(None, out_file)
+    #kaldiWriter.open_or_fd()
+    kaldiWriter = KaldiWriteOut("predict.scp", "predict.ark")
+    kaldiWriter.open()
     for preds, i_batch, batch in module.iter_predict(data_test):
         label = batch.label[0].asnumpy().astype('int32')
         posteriors = preds[0].asnumpy().astype('float32')
