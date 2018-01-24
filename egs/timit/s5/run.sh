@@ -23,7 +23,7 @@ kaldi_dataset_root=$kaldi_root/egs/$dataset/s5
 cmd=run.pl
 # root folder,
 expdir=`pwd`/exp
-scripts_path=../../../
+src_path=../../../src
 
 export KALDI_ROOT=$kaldi_root
 
@@ -133,20 +133,20 @@ fi
 # generate label counts
 if [ $stage -le 2 ] ; then
     $cmd JOB=1:1 $dir/log/gen_label_mean.JOB.log \
-        python $scripts_path/make_stats.py --config $config  \| copy-feats ark:- ark:$dir/label_mean.ark
+        python $src_path/make_stats.py --config $config  \| copy-feats ark:- ark:$dir/label_mean.ark
     echo NO_FEATURE_TRANSFORM ark:$dir/label_mean.ark > $dir/label_mean.feats
 fi
 
 
 # training, note that weight decay is for the whole batch (0.00001 * 20 (minibatch) * 40 (batch_size))
 if [ $stage -le 3 ] ; then
-    python $scripts_path/train_lstm_proj.py --config $config
+    python $src_path/train_lstm_proj.py --config $config
 fi
 
 # decoding
 if [ $stage -le 4 ] ; then
   cp $ali_src/final.mdl $expdir
-  mxnet_string="OMP_NUM_THREADS=1 python $scripts_path/decode_mxnet.py --config $config --train_batch_size 1 --train_method simple"
-  $scripts_path/decode_mxnet.sh --nj $njdec --cmd $cmd --acwt $acwt --scoring-opts "$scoring" \
+  mxnet_string="OMP_NUM_THREADS=1 python $src_path/decode_mxnet.py --config $config --train_batch_size 1 --train_method simple"
+  ./scripts/decode_mxnet.sh --nj $njdec --cmd $cmd --acwt $acwt --scoring-opts "$scoring" \
     $graph_src $dev_src $expdir/decode_${prefix}_$(basename $dev_src) "$mxnet_string"
 fi
