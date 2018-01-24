@@ -13,10 +13,10 @@ else:
 
 def parse_args():
     default_cfg = configparser.ConfigParser()
-    default_cfg.read(os.path.join(os.path.dirname(__file__), 'default.cfg'))
+    default_cfg.read('default.cfg')
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--configfile", help="config file for training parameters")
+    parser.add_argument("--config", help="config file for training parameters")
 
     # those allow us to overwrite the configs through command line
     for sec in default_cfg.sections():
@@ -27,9 +27,9 @@ def parse_args():
 
     args = parser.parse_args()
 
-    if args.configfile is not None:
+    if args.config is not None:
         # now read the user supplied config file to overwrite some values
-        default_cfg.read(args.configfile)
+        default_cfg.read(args.config)
 
     # now overwrite config from command line options
     for sec in default_cfg.sections():

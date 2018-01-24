@@ -10,7 +10,7 @@ set -o pipefail  #Exit if any of the commands in the pipeline will
                  #return non-zero return code
 set -u           #Fail on an undefined variable
 
-global_config_file=scripts/global.cfg
+global_config_file=global.cfg
 if [ ! -f  $global_config_file ]; then
     echo "Global config file doesn't exist"
     exit 1
@@ -97,6 +97,7 @@ sed -i "s:EPOCH_NUM:${num_epoch}:g" $config
 sed -i "s:DATASET:${dataset}:g" $config
 sed -i "s:DATA_PREFIX:${dir}:g" $config
 sed -i "s:OUTPUT_DIM:${ydim}:g" $config
+sed -i "s:MODEL_PREFIX:${expdir}/$dataset:g" $config
 
 # prepare listing data
 if [ $stage -le 0 ] ; then
@@ -109,11 +110,6 @@ if [ $stage -le 0 ] ; then
     $cmd JOB=1:$num $dir/log/gen_post.JOB.log \
         ali-to-pdf $ali_src/final.mdl "ark:gunzip -c $ali_src/ali.JOB.gz |" \
             ark:- \| ali-to-post ark:- ark,scp:$dir/rawpost/post.JOB.ark,$dir/rawpost/post.JOB.scp || exit 1;
-    #num=`cat $ali_src/num_jobs`
-    #$cmd JOB=1:$num $dir/log/gen_post.JOB.log \
-    #    ali-to-pdf $ali_src/final.mdl ark:$ali_src/ali.JOB.ark \
-    #        ark:- \| ali-to-post ark:- ark,scp:$dir/rawpost/post.JOB.ark,$dir/rawpost/post.JOB.scp || exit 1;
-
 
     for n in $(seq $num); do
         cat $dir/rawpost/post.${n}.scp || exit 1;
@@ -137,21 +133,20 @@ fi
 # generate label counts
 if [ $stage -le 2 ] ; then
     $cmd JOB=1:1 $dir/log/gen_label_mean.JOB.log \
-        python $scripts_path/make_stats.py --configfile $config --data_train $dir/train.feats \| copy-feats ark:- ark:$dir/label_mean.ark
+        python $scripts_path/make_stats.py --config $config  \| copy-feats ark:- ark:$dir/label_mean.ark
     echo NO_FEATURE_TRANSFORM ark:$dir/label_mean.ark > $dir/label_mean.feats
 fi
 
 
 # training, note that weight decay is for the whole batch (0.00001 * 20 (minibatch) * 40 (batch_size))
 if [ $stage -le 3 ] ; then
-    python $scripts_path/train_lstm_proj.py --configfile $config --data_train $dir/train.feats --data_dev $dir/dev.feats --train_prefix $PWD/$expdir/$prefix --train_num_epoch $num_epoch --train_optimizer speechSGD --train_learning_rate 1 --train_context $deviceNumber --train_weight_decay 0.008 --train_show_every 1000
+    python $scripts_path/train_lstm_proj.py --config $config
 fi
 
 # decoding
 if [ $stage -le 4 ] ; then
   cp $ali_src/final.mdl $expdir
-  mxnet_string="OMP_NUM_THREADS=1 python $scripts_path/decode_mxnet.py --config $config --data_test $dir/test.feats --data_label_mean $dir/label_mean.feats --train_method $method --train_prefix $PWD/$expdir/$prefix --train_num_epoch $num_epoch --train_context $deviceNumber --train_batch_size 1"
+  mxnet_string="OMP_NUM_THREADS=1 python $scripts_path/decode_mxnet.py --config $config --train_batch_size 1 --train_method simple"
   $scripts_path/decode_mxnet.sh --nj $njdec --cmd $cmd --acwt $acwt --scoring-opts "$scoring" \
     $graph_src $dev_src $expdir/decode_${prefix}_$(basename $dev_src) "$mxnet_string"
-
 fi
