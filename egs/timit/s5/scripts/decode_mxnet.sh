@@ -68,6 +68,8 @@ if [ $stage -le 0 ]; then
     $model $graphdir/HCLG.fst ark:- "ark:|gzip -c > $decode_dir/lat.JOB.gz" || exit 1;
 fi
 
+echo "start scoring"
+
 # Run the scoring
 if ! $skip_scoring ; then
   [ ! -x local/score.sh ] && \

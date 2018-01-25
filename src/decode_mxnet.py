@@ -77,6 +77,7 @@ if __name__ == '__main__':
     feat_dim = args.config.getint('data', 'xdim')
     label_dim = args.config.getint('data', 'ydim')
     out_file = args.config.get('data', 'out_file')
+    out_dir = args.config.get('data', 'out_dir')
     num_epoch = args.config.getint('train', 'num_epoch')
     model_name = get_checkpoint_path(args)
     logging.basicConfig(level=logging.DEBUG, format='%(asctime)-15s %(message)s')
@@ -130,7 +131,7 @@ if __name__ == '__main__':
 
     #kaldiWriter = KaldiWriteOut(None, out_file)
     #kaldiWriter.open_or_fd()
-    kaldiWriter = KaldiWriteOut("feats.scp", "feats.ark")
+    kaldiWriter = KaldiWriteOut(out_dir+"/feats.scp", out_dir+"/feats.ark")
     kaldiWriter.open()
     for preds, i_batch, batch in module.iter_predict(data_test):
         label = batch.label[0].asnumpy().astype('int32')

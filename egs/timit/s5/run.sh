@@ -91,6 +91,9 @@ stage=$stage
 
 mkdir -p $expdir
 dir=$expdir/data-for-mxnet
+decode_dir=$expdir/decode_${prefix}_$(basename $dev_src)
+
+mkdir -p $decode_dir
 
 cp scripts/template.cfg $config
 sed -i "s:EPOCH_NUM:${num_epoch}:g" $config
@@ -98,6 +101,7 @@ sed -i "s:DATASET:${dataset}:g" $config
 sed -i "s:DATA_PREFIX:${dir}:g" $config
 sed -i "s:OUTPUT_DIM:${ydim}:g" $config
 sed -i "s:MODEL_PREFIX:${expdir}/$dataset:g" $config
+sed -i "s:MX_DEOCDE_DIR:${decode_dir}:g" $config
 
 # prepare listing data
 if [ $stage -le 0 ] ; then
@@ -150,9 +154,6 @@ fi
 
 if [ $stage -le 5 ] ; then
   cp $ali_src/final.mdl $expdir
-  decode_dir=$expdir/decode_${prefix}_$(basename $dev_src)
-  cp feats.scp $decode_dir/
-  cp feats.ark $decode_dir/
   cp $dev_src/utt2spk $decode_dir
   ./scripts/decode_mxnet.sh --nj $njdec --cmd $cmd --acwt $acwt --scoring-opts "$scoring" $graph_src $decode_dir $dev_src
 
