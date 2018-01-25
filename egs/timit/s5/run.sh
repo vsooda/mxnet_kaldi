@@ -150,14 +150,18 @@ fi
 
 if [ $stage -le 5 ] ; then
   cp $ali_src/final.mdl $expdir
-  #./scripts/decode_mxnet.sh --nj $njdec --cmd $cmd --acwt $acwt --scoring-opts "$scoring" \
-  #  $graph_src $dev_src $expdir/decode_${prefix}_$(basename $dev_src)
-  max_active=7000 # maximum of active tokens
-  min_active=200 #minimum of active tokens
-  max_mem=50000000 # limit the fst-size to 50MB (larger fsts are minimized)
-  beam=13.0 # GMM:13.0
-  latbeam=8.0 # GMM:6.0
-  latgen-faster-mapped --min-active=$min_active --max-active=$max_active --max-mem=$max_mem --beam=$beam --lattice-beam=$latbeam \
-    --acoustic-scale=$acwt --allow-partial=true --word-symbol-table=$graph_src/words.txt \
-    $ali_src/final.mdl $graph_src/HCLG.fst ark:predict.ark "ark:|gzip -c > $dir/lat.gz" || exit 1;
+  decode_dir=$expdir/decode_${prefix}_$(basename $dev_src)
+  cp feats.scp $decode_dir/
+  cp feats.ark $decode_dir/
+  cp $dev_src/utt2spk $decode_dir
+  ./scripts/decode_mxnet.sh --nj $njdec --cmd $cmd --acwt $acwt --scoring-opts "$scoring" $graph_src $decode_dir $dev_src
+
+  #max_active=7000 # maximum of active tokens
+  #min_active=200 #minimum of active tokens
+  #max_mem=50000000 # limit the fst-size to 50MB (larger fsts are minimized)
+  #beam=13.0 # GMM:13.0
+  #latbeam=8.0 # GMM:6.0
+  #latgen-faster-mapped --min-active=$min_active --max-active=$max_active --max-mem=$max_mem --beam=$beam --lattice-beam=$latbeam \
+  #  --acoustic-scale=$acwt --allow-partial=true --word-symbol-table=$graph_src/words.txt \
+  #  $ali_src/final.mdl $graph_src/HCLG.fst ark:predict.ark "ark:|gzip -c > $dir/lat.gz" || exit 1;
 fi

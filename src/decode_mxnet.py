@@ -130,7 +130,7 @@ if __name__ == '__main__':
 
     #kaldiWriter = KaldiWriteOut(None, out_file)
     #kaldiWriter.open_or_fd()
-    kaldiWriter = KaldiWriteOut("predict.scp", "predict.ark")
+    kaldiWriter = KaldiWriteOut("feats.scp", "feats.ark")
     kaldiWriter.open()
     for preds, i_batch, batch in module.iter_predict(data_test):
         label = batch.label[0].asnumpy().astype('int32')
