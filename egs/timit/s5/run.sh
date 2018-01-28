@@ -56,7 +56,11 @@ graph_src=$kaldi_dataset_root/$graph_dir
 train_src=$kaldi_dataset_root/$train_dir
 dev_src=$kaldi_dataset_root/$dev_dir
 
-ydim=$((`cat ${graph_src}/num_pdfs`+1))
+lang=$kaldi_dataset_root/$lang_dir
+
+#ydim=$((`cat ${graph_src}/num_pdfs`+1))
+#ydim=`cat $lang/phones.txt | wc -l`
+ydim=51
 echo "ydim: " $ydim
 
 # config file
@@ -106,18 +110,13 @@ sed -i "s:MX_DEOCDE_DIR:${decode_dir}:g" $config
 # prepare listing data
 if [ $stage -le 0 ] ; then
     mkdir -p $dir
-    mkdir -p $dir/log
-    mkdir -p $dir/rawpost
+    #ali-to-phones --per-frame $ali_src/final.mdl "ark:gunzip -c $ali_src/ali.*.gz |" ark,scp,t:$dir/post.ark,$dir/post.scp
+    #| utils/int2sym.pl -f 2- $lang/phones.txt
+    #ali-to-pdf $ali_src/final.mdl "ark:gunzip -c $ali_src/ali.*.gz |" \
+    #        ark:- | ali-to-post ark:- ark,scp,t:$dir/post.ark,$dir/post.scp
+    ali-to-phones --per-frame $ali_src/final.mdl "ark:gunzip -c $ali_src/ali.*.gz |" ark:- \
+        | ali-to-post ark:- ark,scp,t:$dir/post.ark,$dir/post.scp
 
-    # for compressed ali
-    num=`cat $ali_src/num_jobs`
-    $cmd JOB=1:$num $dir/log/gen_post.JOB.log \
-        ali-to-pdf $ali_src/final.mdl "ark:gunzip -c $ali_src/ali.JOB.gz |" \
-            ark:- \| ali-to-post ark:- ark,scp:$dir/rawpost/post.JOB.ark,$dir/rawpost/post.JOB.scp || exit 1;
-
-    for n in $(seq $num); do
-        cat $dir/rawpost/post.${n}.scp || exit 1;
-    done > $dir/post.scp
 fi
 
 if [ $stage -le 1 ] ; then
@@ -146,6 +145,8 @@ fi
 if [ $stage -le 3 ] ; then
     python $src_path/train_lstm_proj.py --config $config
 fi
+
+exit
 
 # decoding
 if [ $stage -le 4 ] ; then
