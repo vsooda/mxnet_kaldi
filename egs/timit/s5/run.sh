@@ -59,8 +59,8 @@ dev_src=$kaldi_dataset_root/$dev_dir
 lang=$kaldi_dataset_root/$lang_dir
 
 #ydim=$((`cat ${graph_src}/num_pdfs`+1))
-#ydim=`cat $lang/phones.txt | wc -l`
-ydim=51
+ydim=`cat $lang/phones.txt | wc -l`
+#ydim=51
 echo "ydim: " $ydim
 
 # config file
