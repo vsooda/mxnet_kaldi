@@ -52,43 +52,41 @@ if __name__ == "__main__":
     print()
     print("-------- Kaldi SBFMReader and MatrixF class example --------")
 
-    reader = kaldi.SBFMReader_new_char("scp:data.scp")
-    
+    reader = kaldi.SBFMReader_new_char("scp:feats.scp")
+
     # data.scp has exactly one utterance, assert it's there
-    assert(not kaldi.SBFMReader_Done(reader))
+    while not kaldi.SBFMReader_Done(reader):
+        utt_id = kaldi.SBFMReader_Key(reader)
+        feat_value = kaldi.SBFMReader_Value(reader)
+        feat_rows = kaldi.MatrixF_NumRows(feat_value)
+        feat_cols = kaldi.MatrixF_NumCols(feat_value)
+        feat_data = kaldi.MatrixF_Data(feat_value)
 
-    utt_id = kaldi.SBFMReader_Key(reader)
+        # never use numpy.ndarray(buf=) or numpy.ctypeslib.as_array
+        # because you don't know if Python or C owns buffer
+        # (even if you numpy.copy() resulting array)
+        # http://stackoverflow.com/questions/4355524/getting-data-from-ctypes-array-into-numpy
+        #
+        # Can't use memmove/memcpy because arrays are strided
+        # Use cpy_to_ptr
+        feats = numpy.empty((feat_rows,feat_cols), dtype=numpy.float32)
 
-    feat_value = kaldi.SBFMReader_Value(reader)
-    feat_rows = kaldi.MatrixF_NumRows(feat_value)
-    feat_cols = kaldi.MatrixF_NumCols(feat_value)
-    feat_data = kaldi.MatrixF_Data(feat_value)
-    
-    # never use numpy.ndarray(buf=) or numpy.ctypeslib.as_array
-    # because you don't know if Python or C owns buffer
-    # (even if you numpy.copy() resulting array)
-    # http://stackoverflow.com/questions/4355524/getting-data-from-ctypes-array-into-numpy
-    #
-    # Can't use memmove/memcpy because arrays are strided
-    # Use cpy_to_ptr
-    feats = numpy.empty((feat_rows,feat_cols), dtype=numpy.float32)
+        # MUST: cast Python int to pointer, otherwise C interprets as 32-bit
+        # if you print the pointer value before casting, you might see weird value before seg fault
+        # casting fixes that
+        feats_numpy_ptr = ctypes.cast(feats.ctypes.data, c_float_ptr)
+        kaldi.MatrixF_cpy_to_ptr(feat_value, feats_numpy_ptr, feats.strides[0]/4)
 
-    # MUST: cast Python int to pointer, otherwise C interprets as 32-bit
-    # if you print the pointer value before casting, you might see weird value before seg fault
-    # casting fixes that
-    feats_numpy_ptr = ctypes.cast(feats.ctypes.data, c_float_ptr)
-    kaldi.MatrixF_cpy_to_ptr(feat_value, feats_numpy_ptr, feats.strides[0]/4)
+        print("Read utterance:")
+        print("  ID: ", utt_id)
+        print("  Rows: ", feat_rows)
+        print("  Cols: ", feat_cols)
+        print("  Value: ", feat_data)
+        filename = "mfcc/" + utt_id + ".mfcc"
+        fid = open(filename, 'wb')
+        feats.tofile(fid)
+        fid.close()
+        kaldi.SBFMReader_Next(reader)
 
-    print("Read utterance:")
-    print("  ID: ", utt_id)
-    print("  Rows: ", feat_rows)
-    print("  Cols: ", feat_cols)
-    print("  Value: ", feat_data)
-    print(feats)
-    print("  This should match data.txt")
-
-    # assert no more utterances left
-    kaldi.SBFMReader_Next(reader)
-    assert(kaldi.SBFMReader_Done(reader))
 
     kaldi.SBFMReader_Delete(reader)
